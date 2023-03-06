@@ -30,7 +30,7 @@ public class Worker : BackgroundService
         _telegramService.SendMessage("-1001834328957", "Все плохо! Сервис не работает.");
 
       var second = 1000; // 1000 = 1sec; 
-      await Task.Delay(second * 60 * 1, stoppingToken);
+      await Task.Delay(second * 60 * 60, stoppingToken);
     }
   }
 
