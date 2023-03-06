@@ -1,0 +1,109 @@
+name: Dotnet app deployment workflow
+on:
+  push: 
+    branches: [main]
+
+jobs:
+  job_one:
+    name: Clone repo
+    runs-on : ubuntu-latest
+    steps:
+      - name: establisihing ssh connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: 95.163.241.193
+          username: root
+          key: ${{ secrets.LINUX_DEPLOY_SECRET }}
+          port: 22
+          script: |
+            whoami
+            cd /root/apps_sources/
+            rm -rf /root/apps_sources/platform_health_checker
+            rm -rf /var/apps/backend/random_health_checker_webapi
+            git clone git@github.com:davidishe/platform_health_checker.git
+  
+  job_two:
+    name: Install dotnet packages
+    runs-on : ubuntu-latest
+    needs: [job_one]
+    steps:
+      - name: establisihing ssh connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: 95.163.241.193
+          username: root
+          key: ${{ secrets.LINUX_DEPLOY_SECRET }}
+          port: 22
+          script: |
+            whoami
+            
+            cd /root/apps_sources/platform_health_checker/HealthChecker.Infrastructure.Worker/Properties/
+            mv launchSettings.Protected.json launchSettings.json
+            cd /root/apps_sources/platform_health_checker/HealthChecker.Infrastructure.Worker/
+            mv appsettings.Protected.json appsettings.json
+            sed -i 's/TELEGRAM_TOKEN_PROD/'${{ secrets.TELEGRAM_TOKEN_PROD }}'/' appsettings.json
+            # sed -i 's/DATABASE_PASSWORD/'${{ secrets.DATABASE_PASSWORD }}'/' appsettings.json
+            cd /root/apps_sources/platform_health_checker/
+            dotnet restore
+            rm -rf /var/apps/backend/random_health_checker_webapi
+            mkdir -p /var/apps/backend/random_health_checker_webapi
+            
+  job_tree:
+      name: Publish dotnet app
+      runs-on : ubuntu-latest
+      needs: [job_two]
+      steps:
+        - name: establisihing ssh connection
+          uses: appleboy/ssh-action@master
+          with:
+            host: 95.163.241.193
+            username: root
+            key: ${{ secrets.LINUX_DEPLOY_SECRET }}
+            port: 22
+            script: |
+              whoami
+              cd /root/apps_sources/platform_health_checker/HealthChecker.Infrastructure.Worker
+              dotnet publish -c Release -o ../../health_checker
+  job_four:
+    name: Move files to work directory
+    runs-on : ubuntu-latest
+    needs: [job_tree]
+    steps:
+      - name: establisihing ssh connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: 95.163.241.193
+          username: root
+          key: ${{ secrets.LINUX_DEPLOY_SECRET }}
+          port: 22
+          script: |
+            whoami
+            cd /root/apps_sources/health_checker
+            mkdir -p /var/apps/backend
+            mkdir -p /var/apps/backend/health_checker
+            mkdir -p /var/apps/backend/health_checker/Assets/
+            cp -R . /var/apps/backend/health_checker
+            cp CI/health_checker.service /etc/systemd/system/
+            systemctl enable health_checker.service
+            systemctl restart health_checker.service  
+            
+ 
+  
+ 
+  final_jobe:
+    name: Delete old staff
+    runs-on : ubuntu-latest
+    needs: [job_tree]
+    steps:
+      - name: establisihing ssh connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: 95.163.241.193
+          username: root
+          key: ${{ secrets.LINUX_DEPLOY_SECRET }}
+          port: 22
+          script: |
+            whoami
+            rm -rf /root/apps_sources/platform_health_checker
+            rm -rf /root/apps_sources/health_checker_condtions
+            rm -rf /root/apps_sources/health_checker
