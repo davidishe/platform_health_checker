@@ -24,7 +24,7 @@ public class Worker : BackgroundService
       _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
       var healthCheckStatus = await GetHealthCheckStatus();
       if (healthCheckStatus)
-        _telegramService.SendMessage("-1001834328957", "Все хорошо! Сервис работает.");
+        _telegramService.SendMessage("-1001834328957", "Бот-проверяльщик смиренно докладывает. Все хорошо! Сервис работает.");
 
       if (!healthCheckStatus)
         _telegramService.SendMessage("-1001834328957", "Все плохо! Сервис не работает.");
