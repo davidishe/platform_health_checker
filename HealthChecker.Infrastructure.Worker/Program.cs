@@ -1,5 +1,4 @@
 using Checker.Infrastructure.Worker;
-using HealthChecker.Harvester;
 using Infrastructure.Services.TelegramService;
 
 IHost host = Host.CreateDefaultBuilder(args)
@@ -7,7 +6,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
       services.AddHostedService<Worker>();
       services.AddSingleton<ITelegramService, TelegramService>();
-      services.AddSingleton<IRestResponseService, RestResponseService>();
+      // services.AddSingleton<IRestResponseService, RestResponseService>();
 
     })
     .Build();
